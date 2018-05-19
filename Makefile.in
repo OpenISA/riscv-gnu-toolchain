@@ -75,8 +75,9 @@ newlib: stamps/build-gcc-newlib-stage2
 linux: stamps/build-gcc-linux-stage2
 linux-native: stamps/build-gcc-linux-native
 
-.PHONY: build-binutils build-gcc1 build-libc build-gcc2 build-qemu
+.PHONY: build-binutils build-gdb build-gcc1 build-libc build-gcc2 build-qemu
 build-binutils: stamps/build-binutils-@default_target@
+build-gdb: stamps/build-gdb-@default_target@
 build-gcc%: stamps/build-gcc-@default_target@-stage%
 ifeq (@default_target@,linux)
 build-libc: $(patsubst %,stamps/build-glibc-linux-%,$(MULTLIB_NAMES))
@@ -149,7 +150,7 @@ $(addprefix $(srcdir)/patches/,$(PACKAGES)): $(srcdir)/patches/%: src/%
 
 patches: $(addprefix $(srcdir)/patches/,$(PACKAGES))
 
-stamps/build-binutils-linux: $(srcdir)/riscv-binutils-gdb
+stamps/build-binutils-linux: $(srcdir)/riscv-binutils
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 # CC_FOR_TARGET is required for the ld testsuite.
@@ -163,9 +164,33 @@ stamps/build-binutils-linux: $(srcdir)/riscv-binutils-gdb
 		--disable-werror \
 		--disable-nls \
 		$(BINUTILS_GDB_TARGET_FLAGS) \
-		@enable_gdb@
+		--disable-gdb
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-gdb-linux: $(srcdir)/riscv-gdb
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+# CC_FOR_TARGET is required for the ld testsuite.
+	cd $(notdir $@) && CC_FOR_TARGET=$(GLIBC_CC_FOR_TARGET) $</configure \
+		--target=$(LINUX_TUPLE) \
+		$(CONFIGURE_HOST) \
+		--prefix=$(INSTALL_DIR) \
+		--with-sysroot=$(SYSROOT) \
+		$(MULTILIB_FLAGS) \
+		@with_guile@ \
+		--disable-werror \
+		--disable-nls \
+		$(BINUTILS_GDB_TARGET_FLAGS) \
+		--enable-gdb \
+		--disable-gas \
+		--disable-binutils \
+		--disable-ld \
+		--disable-gold \
+		--disable-gprof
+	$(MAKE) -C $(notdir $@) all-gdb
+	$(MAKE) -C $(notdir $@) install-gdb
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-linux-headers:
@@ -282,7 +307,7 @@ stamps/build-gcc-linux-stage2: $(srcdir)/riscv-gcc $(addprefix stamps/build-glib
 	cp -a $(INSTALL_DIR)/$(LINUX_TUPLE)/lib* $(SYSROOT)
 	mkdir -p $(dir $@) && touch $@
 
-stamps/build-binutils-linux-native: $(srcdir)/riscv-binutils-gdb stamps/build-gcc-linux-stage2
+stamps/build-binutils-linux-native: $(srcdir)/riscv-binutils stamps/build-gcc-linux-stage2
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
@@ -295,7 +320,7 @@ stamps/build-binutils-linux-native: $(srcdir)/riscv-binutils-gdb stamps/build-gc
 		--disable-werror \
 		--disable-nls \
 		$(BINUTILS_GDB_NATIVE_FLAGS) \
-		@enable_gdb@
+		--disable-gdb
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
 	mkdir -p $(dir $@) && touch $@
@@ -328,7 +353,7 @@ stamps/build-gcc-linux-native: $(srcdir)/riscv-gcc stamps/build-gcc-linux-stage2
 	cp -a $(INSTALL_DIR)/$(LINUX_TUPLE)/lib* $(SYSROOT)
 	mkdir -p $(dir $@) && touch $@
 
-stamps/build-binutils-newlib: $(srcdir)/riscv-binutils-gdb
+stamps/build-binutils-newlib: $(srcdir)/riscv-binutils
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 # CC_FOR_TARGET is required for the ld testsuite.
@@ -339,9 +364,30 @@ stamps/build-binutils-newlib: $(srcdir)/riscv-binutils-gdb
 		@with_guile@ \
 		--disable-werror \
 		$(BINUTILS_GDB_TARGET_FLAGS) \
-		@enable_gdb@
+		--disable-gdb
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-gdb-newlib: $(srcdir)/riscv-gdb
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+# CC_FOR_TARGET is required for the ld testsuite.
+	cd $(notdir $@) && CC_FOR_TARGET=$(NEWLIB_CC_FOR_TARGET) $</configure \
+		--target=$(NEWLIB_TUPLE) \
+		$(CONFIGURE_HOST) \
+		--prefix=$(INSTALL_DIR) \
+		@with_guile@ \
+		--disable-werror \
+		$(BINUTILS_GDB_TARGET_FLAGS) \
+		--enable-gdb \
+		--disable-gas \
+		--disable-binutils \
+		--disable-ld \
+		--disable-gold \
+		--disable-gprof
+	$(MAKE) -C $(notdir $@) all-gdb
+	$(MAKE) -C $(notdir $@) install-gdb
 	mkdir -p $(dir $@) && touch $@
 
 stamps/build-gcc-newlib-stage1: $(srcdir)/riscv-gcc stamps/build-binutils-newlib
