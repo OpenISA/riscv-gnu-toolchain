@@ -184,6 +184,7 @@ stamps/build-gdb-linux: $(srcdir)/riscv-gdb
 		--disable-nls \
 		$(BINUTILS_GDB_TARGET_FLAGS) \
 		--enable-gdb \
+		--disable-sim \
 		--disable-gas \
 		--disable-binutils \
 		--disable-ld \
@@ -381,6 +382,7 @@ stamps/build-gdb-newlib: $(srcdir)/riscv-gdb
 		--disable-werror \
 		$(BINUTILS_GDB_TARGET_FLAGS) \
 		--enable-gdb \
+		--disable-sim \
 		--disable-gas \
 		--disable-binutils \
 		--disable-ld \
