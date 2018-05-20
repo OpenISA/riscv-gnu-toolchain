@@ -71,8 +71,8 @@ NEWLIB_NANO_TARGET_BOARDS ?= $(shell echo "$(NEWLIB_MULTILIB_NAMES)" | sed 's!\(
 CONFIGURE_HOST   = @configure_host@
 
 all: @default_target@
-newlib: stamps/build-gcc-newlib-stage2
-linux: stamps/build-gcc-linux-stage2
+newlib: stamps/build-gcc-newlib-stage2 stamps/build-gdb-newlib
+linux: stamps/build-gcc-linux-stage2 stamps/build-gdb-linux
 linux-native: stamps/build-gcc-linux-native
 
 .PHONY: build-binutils build-gdb build-gcc1 build-libc build-gcc2 build-qemu
